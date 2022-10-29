@@ -1,0 +1,23 @@
+title 동적라우팅
+participant App as ap
+participant AMOD Engine as ae
+participant NZERO KAFKA as nz
+ap->ae : call for dispatch
+note right of App : 출도착지 loc, \n장애인 여부,\n휠체어 보유 여부
+note right of ae : 실선(direct call function),\n점선(event driven call function)
+activate ap
+ae->ae : calculating dispatch info
+activate ae
+note right of ae : 참조: AMOD Engine
+deactivate ae
+alt success
+ae->ap : dispatch success
+alt : accept dispatch
+ap->ae : ok
+ae-->nz : publish dispatch infomation [참조: amod-nzero message]
+else decline dispatch
+ap->ae : no
+end
+else failure
+ae->ap : dispatch failed
+end

@@ -1,0 +1,19 @@
+title AMOD <-> NZERO message 송수신
+participant AMOD Engine as ae
+participant NZERO KAFKA as nz
+seq initial stage
+nz->ae : subscribe topic
+activate ae
+note right of ae : topic : ["Dispatch Infomation","Realtime Service Information"]
+ae->nz : subscribe topic
+activate nz
+note right of nz : topic : "car_status"
+end
+loop service stage async
+nz-->ae : 운행상황, 교통상황
+note right of nz : topic: "car_status" , schema : [{car_id: uuid, current_loc: {lat, lng}, status: {code, message, locs}]
+ae-->nz : 배차정보
+note right of nz : topic: "Dispatch Information", schema : [{car_id: uuid, dispatch_loc: [{lat, lng}], mesasge: {code, content]
+ae-->nz : 실시간 정보
+note right of nz : topic : "Realtime Service Infomation" , schema : {car_id: uuid, message: {code, content}
+end

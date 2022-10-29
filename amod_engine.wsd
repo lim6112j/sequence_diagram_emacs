@@ -1,0 +1,9 @@
+title AMOD Engine
+participant app as ap
+participant dispatcher as di
+participant data collector as dc
+participant price calculator as pc
+participant service DB as ad
+participant data repositiory as dr
+participant kafka as ka
+ap->di : call for dispatch
