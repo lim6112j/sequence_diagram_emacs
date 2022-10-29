@@ -1,0 +1,30 @@
+title pre reservation
+participant App as ap
+participant AMOD Engine as ae
+participant KAFKA as nz
+ap->ae : reservation request
+activate ap
+activate ae
+alt request success
+    loop async message
+        nz-->ae : Topic : 운행정보, 교통정보
+    end
+    ae->ae : calculating optimal dispatch
+    activate ae
+    deactivate ae
+    note right of ae : 참조: AMOD ENGINE
+    ae->ap : success
+    note left of ae : success message , schema : \n{status, message, travel_paths, pickup_loc,\ndropoff_loc, travel_time, \npickup_time, dropoff_time}
+    alt accept
+        ap->ae : OK
+        ae->nz : Add dispatch infomation to Topic : dispatch
+    else decline
+        ap->ae : No
+        ae->ae : end of instance
+        deactivate ae
+    end
+else request failure
+    ae->ap : failure
+    activate ae
+    note left of ae : failure message , \nschema : {status, message}\nstatus_code: \n0: network fail\n1: no avaliable vehicle\n2: out of odd
+end

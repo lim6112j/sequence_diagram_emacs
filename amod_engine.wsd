@@ -3,7 +3,95 @@ participant app as ap
 participant dispatcher as di
 participant data collector as dc
 participant price calculator as pc
-participant service DB as ad
+participant service DB as sd
 participant data repositiory as dr
+participant scheduler as sc
+participant rule engine as re
 participant kafka as ka
-ap->di : call for dispatch
+par initializing
+    di->dr : map data request
+    activate di
+    activate dr
+    dr->di : map data response
+    di->re : request ruleset
+    re->di : response ruleset
+    ka->di : static ODD dataset
+end
+loop receive subscribed topic data asynchronously
+    ka-->dc : 실사간 차량 위치, odd network
+    activate dc
+    dc-->sd : 실사간 차량 위치, odd network
+    activate sd
+end
+alt Realtime Dispatch Request success
+    ap->di : call for dispatch
+    activate ap
+    note right of ap : 출발, 도착지, 장애인 여부, 휠체어 여부
+    di->sd : 차량위치 request
+    sd->di : 차량위치 response
+
+    di->di : calculating optimal vehicle
+    activate di
+    deactivate di
+    alt case of optimal vehicle found
+        di->ap : dispatch success : {status, message, paths, price}
+        alt accept
+            ap->di : OK
+            di->pc : send dispatch infomation
+            activate pc
+            pc->pc : calculating estimated price
+            pc->di : return price
+            deactivate pc
+            di->sd : dispatch infomation
+            di->ka : add to topic feed
+        else decline
+            di->di : end of dispatching
+            ap->di : No
+        end
+    else
+        di->ap : dispatch failed : {status, message}
+        note right of ap : status code : 0 : no vehicle avaliable, 1 : out of odd area, 2
+    end
+else request failed
+    ap->ap: app request failed  {status, message}
+    activate ap
+    deactivate ap
+end
+
+alt Pre Reservation Request success
+    ap->di : call for dispatch
+    activate ap
+    note right of ap : 출발, 도착지, 장애인 여부, 휠체어 여부
+    di->sd : 차량위치 request
+    sd->di : 차량위치 response
+    di->sc : calculating optimal schedule {optimal_time_to_start, status}
+    note right of sc : calculating time \nbuffer with distance \nto start point, \ndistance with batterry ,
+    activate sc
+    sc->di : response schedule
+    deactivate sc
+    activate di
+    deactivate di
+    alt case of optimal vehicle found
+        di->ap : dispatch success : {status, message, paths, price, picup_time, dropoff_time, travel_time}
+        alt accept
+            ap->di : OK
+            di->pc : send dispatch infomation
+            activate pc
+            pc->pc : calculating estimated price
+            pc->di : return price
+            deactivate pc
+            di->sd : dispatch infomation
+            di->ka : add to topic feed
+        else decline
+            di->di : end of dispatching
+            ap->di : No
+        end
+    else
+        di->ap : dispatch failed : {status, message}
+        note right of ap : status code : 0 : no vehicle avaliable, 1 : out of odd area, 2
+    end
+else request failed
+    ap->ap: app request failed  {status, message}
+    activate ap
+    deactivate ap
+end
