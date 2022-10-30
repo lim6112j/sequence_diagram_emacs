@@ -29,19 +29,18 @@ alt Realtime Dispatch Request success
     note right of ap : 출발, 도착지, 장애인 여부, 휠체어 여부
     di->sd : 차량위치 request
     sd->di : 차량위치 response
-
     di->di : calculating optimal vehicle
+    di->pc : send dispatch infomation
+    activate pc
+    pc->pc : calculating estimated price
+    pc->di : return price
+    deactivate pc
     activate di
     deactivate di
     alt case of optimal vehicle found
         di->ap : dispatch success : {status, message, paths, price}
         alt accept
             ap->di : OK
-            di->pc : send dispatch infomation
-            activate pc
-            pc->pc : calculating estimated price
-            pc->di : return price
-            deactivate pc
             di->sd : dispatch infomation
             di->ka : add to topic feed
         else decline
@@ -64,22 +63,22 @@ alt Pre Reservation Request success
     note right of ap : 출발, 도착지, 장애인 여부, 휠체어 여부
     di->sd : 차량위치 request
     sd->di : 차량위치 response
-    di->sc : calculating optimal schedule {optimal_time_to_start, status}
-    note right of sc : calculating time \nbuffer with distance \nto start point, \ndistance with batterry ,
+    di->sc : request calculating optimal schedule {optimal_time_to_start, status}
     activate sc
     sc->di : response schedule
     deactivate sc
+    di->pc : send dispatch infomation
+    activate pc
+    pc->pc : calculating estimated price
+    pc->di : return price
+    deactivate pc
+    note right of sc : calculating time \nbuffer with distance \nto start point, \ndistance with batterry ,
+    ap->di : OK
     activate di
     deactivate di
     alt case of optimal vehicle found
         di->ap : dispatch success : {status, message, paths, price, picup_time, dropoff_time, travel_time}
         alt accept
-            ap->di : OK
-            di->pc : send dispatch infomation
-            activate pc
-            pc->pc : calculating estimated price
-            pc->di : return price
-            deactivate pc
             di->sd : dispatch infomation
             di->ka : add to topic feed
         else decline
